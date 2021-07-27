@@ -1,4 +1,3 @@
-
 /*
 На данном этапе у вас уже должен работать GET-запрос который получает список задач
  из файла db.json, и POST-запрос который добавляет новую задачу в db.json.
@@ -11,32 +10,33 @@
 2 Добавьте функцию удаления, с помощью DELETE-запроса. При клике на кнопку “Удалить”,
  удаляйте из файла db.json данные о задаче.
 */
-
-
-const getServer1 = async () => {
-    const res = await fetch('http://localhost:3000/todos');
-    return res.json();
-// console.log(res.json())
-};
-
-const setCont1 = async () => {
-    const allItems = await getServer1();
-    const li = document.querySelector('#list');
-    li.innerHTML = '';
-    allItems.forEach(el => {
-        li.innerHTML += `
-    <li class="task">${el.title} (${el.time} days)</li>
-    });
-    
-    `;
-    });
-};
-
 const title = document.querySelector('input');
 const time = title.nextElementSibling;
-// console.log(time)
-const getServer2 = async () => {
-    const res = await fetch('http://localhost:3000/todos', {
+const btnAdd = document.querySelector('input[type="button"]');
+let elementId;
+
+const getData = () => {
+    fetch('http://localhost:3000/todos').then(res => {
+        return res.json();
+    }).then(data => {
+        const ol = document.querySelector('#list');
+        data.forEach(el => {
+            ol.innerHTML += `
+                <li class="task">${el.title} (${el.time} days)</li>
+                <button data-id="${el.id}">удалить</button>
+                <button data-id="${el.id}">редактировать</button>
+                `;
+        });
+    });
+};
+
+const clearInput = () => {
+    title.value = '';
+    time.value = '';
+}
+
+const postData = () => {
+    fetch('http://localhost:3000/todos', {
         method: "POST",
         body: JSON.stringify({
             "title": title.value,
@@ -45,35 +45,50 @@ const getServer2 = async () => {
         headers: {
             "Content-type": "application/json; charset=utf-8"
         }
+    }).then(res => {
+        return res.json();
     });
-    return res.json();
-
 };
 
-const setCont2 = async () => {
-    const allItems = await getServer2();
-    //       const li = document.querySelector('#list');
-    //       allItems.forEach(el => {
-    //           li.innerHTML += `
-    //       <li class="task">${el.title} (${el.time} days)</li>
-    //       });
-
-    //       `
-    //   })
-    setCont1();
-};
-
-
-
-
-
-const btn = document.querySelector('input[type="button"]');
-btn.addEventListener('click', () => {
-    getServer2();
-
+btnAdd.addEventListener('click', () => {
+    postData();
+    clearInput();
 });
-// console.log(btn)
 
-setCont1();
+document.addEventListener('click', (e) => {
+    const editInfo = e.target;
+    if (editInfo.tagName === 'BUTTON' && editInfo.textContent === 'редактировать') {
+        elementId = e.target.dataset.id;
+        putData();
+        clearInput();
+    }
+    if (editInfo.tagName === 'BUTTON' && editInfo.textContent === 'удалить') {
+        elementId = e.target.dataset.id;
+        deleteData();
+        clearInput();
+    }
+    
+});
 
-// getServer()
+const putData = () => {
+    fetch(`http://localhost:3000/todos/${elementId}`, {
+        method: "PUT",
+        body: JSON.stringify({
+            "title": title.value,
+            "time": time.value
+        }),
+        headers: {
+            "Content-type": "application/json; charset=utf-8"
+        }
+    }).then(res => {
+        return res.json();
+    })
+};
+
+const deleteData = () => {
+    fetch(`http://localhost:3000/todos/${elementId}`, {
+        method: 'DELETE'
+    });
+};
+
+getData();
